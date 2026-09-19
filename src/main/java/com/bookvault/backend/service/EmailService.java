@@ -19,12 +19,15 @@ public class EmailService {
     @Value("${spring.mail.username:your-email@gmail.com}")
     private String fromEmail;
 
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
+
     /**
      * Send email verification link to user
      */
     public boolean sendVerificationEmail(String recipientEmail, String studentName, String verificationToken) {
         String subject = "Verify your BookGrid Account";
-        String verificationUrl = "http://localhost:5173/verify-email?token=" + verificationToken + "&email=" + recipientEmail;
+        String verificationUrl = frontendUrl.replaceAll("/+$", "") + "/verify-email?token=" + verificationToken + "&email=" + recipientEmail;
 
         String htmlContent = "<div style='font-family: Arial, sans-serif; padding: 20px; color: #2d3748; background-color: #fffaf0; border-radius: 8px;'>"
                 + "<h2 style='color: #dd6b20;'>Welcome to BookGrid, " + studentName + "!</h2>"
@@ -46,7 +49,7 @@ public class EmailService {
      */
     public boolean sendPasswordResetEmail(String recipientEmail, String resetToken) {
         String subject = "Reset your BookGrid Password";
-        String resetUrl = "http://localhost:5173/reset-password?token=" + resetToken;
+        String resetUrl = frontendUrl.replaceAll("/+$", "") + "/reset-password?token=" + resetToken;
 
         String htmlContent = "<div style='font-family: Arial, sans-serif; padding: 20px; color: #2d3748; background-color: #edf2f7; border-radius: 8px;'>"
                 + "<h2 style='color: #3182ce;'>BookGrid Password Reset</h2>"
