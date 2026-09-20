@@ -1,0 +1,20 @@
+# Sensitive local configuration (Ignored by Git)
+src/main/resources/application-local.properties
+src/main/resources/application-dev.properties
+src/main/resources/application-*.properties
+!src/main/resources/application.properties
+.env
+.env.local
+
+# Compiled output & Maven build targets
+target/
+*.class
+
+# IDE & Editor files
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+.DS_Store
