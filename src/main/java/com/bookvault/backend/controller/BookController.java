@@ -123,6 +123,58 @@ public class BookController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/{id}/pdf")
+    public ResponseEntity<?> updateBookPdf(
+            @PathVariable String id,
+            @RequestBody Map<String, String> payload) {
+        Book book = bookRepository.findById(id).orElse(null);
+        if (book == null) {
+            return ResponseEntity.status(404).body(Map.of("success", false, "message", "Book not found with ID: " + id));
+        }
+
+        String pdfUrl = payload.get("pdfUrl");
+        if (pdfUrl != null) {
+            book.setPdfUrl(pdfUrl);
+            book.setHasDigital(true);
+        }
+
+        Book updatedBook = bookRepository.save(book);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("success", true);
+        response.put("message", "Book PDF updated successfully");
+        response.put("data", updatedBook);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateBook(
+            @PathVariable String id,
+            @RequestBody Book payload) {
+        Book book = bookRepository.findById(id).orElse(null);
+        if (book == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        if (payload.getTitle() != null) book.setTitle(payload.getTitle());
+        if (payload.getAuthor() != null) book.setAuthor(payload.getAuthor());
+        if (payload.getCategory() != null) book.setCategory(payload.getCategory());
+        if (payload.getIsbn() != null) book.setIsbn(payload.getIsbn());
+        if (payload.getPublisher() != null) book.setPublisher(payload.getPublisher());
+        if (payload.getYear() != null) book.setYear(payload.getYear());
+        if (payload.getPages() != null) book.setPages(payload.getPages());
+        if (payload.getPhysicalCopies() != null) book.setPhysicalCopies(payload.getPhysicalCopies());
+        if (payload.getPhysicalAvailable() != null) book.setPhysicalAvailable(payload.getPhysicalAvailable());
+        if (payload.getHasDigital() != null) book.setHasDigital(payload.getHasDigital());
+        if (payload.getPdfUrl() != null) book.setPdfUrl(payload.getPdfUrl());
+        if (payload.getImageUrl() != null) book.setImageUrl(payload.getImageUrl());
+        if (payload.getDescription() != null) book.setDescription(payload.getDescription());
+
+        Book updatedBook = bookRepository.save(book);
+        return ResponseEntity.ok(updatedBook);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteBook(@PathVariable String id) {
         Book book = bookRepository.findById(id).orElse(null);

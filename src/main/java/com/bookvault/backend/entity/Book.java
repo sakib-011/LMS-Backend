@@ -38,6 +38,10 @@ public class Book {
     @Column(name = "image_url", length = 1000)
     private String imageUrl;
 
+    @Column(name = "pdf_url", columnDefinition = "TEXT")
+    private String pdfUrl;
+
+
     @Column(name = "cloudinary_public_id")
     private String cloudinaryPublicId;
 
@@ -121,6 +125,9 @@ public class Book {
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public String getPdfUrl() { return pdfUrl; }
+    public void setPdfUrl(String pdfUrl) { this.pdfUrl = pdfUrl; }
 
     public String getCloudinaryPublicId() { return cloudinaryPublicId; }
     public void setCloudinaryPublicId(String cloudinaryPublicId) { this.cloudinaryPublicId = cloudinaryPublicId; }

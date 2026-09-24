@@ -52,6 +52,7 @@ public class AuthController {
 
         UserDTO userDTO = UserDTO.builder()
                 .id(user.getId())
+                .studentId(user.getStudentId() != null ? user.getStudentId() : user.getId())
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())
@@ -75,7 +76,13 @@ public class AuthController {
 
         Role userRole = registerRequest.getRole() != null ? registerRequest.getRole() : Role.STUDENT;
 
+        String studentIdToUse = (registerRequest.getStudentId() != null && !registerRequest.getStudentId().trim().isEmpty())
+                ? registerRequest.getStudentId().trim()
+                : "STU-" + System.currentTimeMillis();
+
         User user = User.builder()
+                .id(studentIdToUse)
+                .studentId(studentIdToUse)
                 .name(registerRequest.getName())
                 .email(registerRequest.getEmail())
                 .password(passwordEncoder.encode(registerRequest.getPassword()))
@@ -94,6 +101,7 @@ public class AuthController {
 
         UserDTO userDTO = UserDTO.builder()
                 .id(user.getId())
+                .studentId(user.getStudentId())
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())

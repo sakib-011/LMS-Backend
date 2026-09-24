@@ -10,6 +10,9 @@ public class User {
     @Id
     private String id;
 
+    @Column(name = "student_id")
+    private String studentId;
+
     @Column(nullable = false)
     private String name;
 
@@ -17,6 +20,7 @@ public class User {
     private String email;
 
     @Column(nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String password;
 
     @Enumerated(EnumType.STRING)
@@ -37,8 +41,9 @@ public class User {
 
     public User() {}
 
-    public User(String id, String name, String email, String password, Role role, String status, String department, String phone, String avatar, LocalDateTime createdAt, LocalDateTime lastLogin) {
+    public User(String id, String studentId, String name, String email, String password, Role role, String status, String department, String phone, String avatar, LocalDateTime createdAt, LocalDateTime lastLogin) {
         this.id = id;
+        this.studentId = studentId;
         this.name = name;
         this.email = email;
         this.password = password;
@@ -53,8 +58,11 @@ public class User {
 
     @PrePersist
     protected void onCreate() {
+        if (studentId == null || studentId.trim().isEmpty()) {
+            studentId = id != null ? id : "STU-" + System.currentTimeMillis();
+        }
         if (id == null || id.isEmpty()) {
-            id = java.util.UUID.randomUUID().toString();
+            id = studentId;
         }
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
@@ -66,6 +74,9 @@ public class User {
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
+
+    public String getStudentId() { return studentId != null ? studentId : id; }
+    public void setStudentId(String studentId) { this.studentId = studentId; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -101,6 +112,7 @@ public class User {
 
     public static class UserBuilder {
         private String id;
+        private String studentId;
         private String name;
         private String email;
         private String password;
@@ -113,6 +125,7 @@ public class User {
         private LocalDateTime lastLogin;
 
         public UserBuilder id(String id) { this.id = id; return this; }
+        public UserBuilder studentId(String studentId) { this.studentId = studentId; return this; }
         public UserBuilder name(String name) { this.name = name; return this; }
         public UserBuilder email(String email) { this.email = email; return this; }
         public UserBuilder password(String password) { this.password = password; return this; }
@@ -125,7 +138,7 @@ public class User {
         public UserBuilder lastLogin(LocalDateTime lastLogin) { this.lastLogin = lastLogin; return this; }
 
         public User build() {
-            return new User(id, name, email, password, role, status, department, phone, avatar, createdAt, lastLogin);
+            return new User(id, studentId, name, email, password, role, status, department, phone, avatar, createdAt, lastLogin);
         }
     }
 }

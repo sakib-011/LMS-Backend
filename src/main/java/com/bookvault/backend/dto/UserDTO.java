@@ -4,6 +4,7 @@ import com.bookvault.backend.entity.Role;
 
 public class UserDTO {
     private String id;
+    private String studentId;
     private String name;
     private String email;
     private Role role;
@@ -14,8 +15,9 @@ public class UserDTO {
 
     public UserDTO() {}
 
-    public UserDTO(String id, String name, String email, Role role, String status, String department, String phone, String avatar) {
+    public UserDTO(String id, String studentId, String name, String email, Role role, String status, String department, String phone, String avatar) {
         this.id = id;
+        this.studentId = studentId != null ? studentId : id;
         this.name = name;
         this.email = email;
         this.role = role;
@@ -27,6 +29,9 @@ public class UserDTO {
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
+
+    public String getStudentId() { return studentId != null ? studentId : id; }
+    public void setStudentId(String studentId) { this.studentId = studentId; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -53,6 +58,7 @@ public class UserDTO {
 
     public static class UserDTOBuilder {
         private String id;
+        private String studentId;
         private String name;
         private String email;
         private Role role;
@@ -62,6 +68,7 @@ public class UserDTO {
         private String avatar;
 
         public UserDTOBuilder id(String id) { this.id = id; return this; }
+        public UserDTOBuilder studentId(String studentId) { this.studentId = studentId; return this; }
         public UserDTOBuilder name(String name) { this.name = name; return this; }
         public UserDTOBuilder email(String email) { this.email = email; return this; }
         public UserDTOBuilder role(Role role) { this.role = role; return this; }
@@ -71,7 +78,7 @@ public class UserDTO {
         public UserDTOBuilder avatar(String avatar) { this.avatar = avatar; return this; }
 
         public UserDTO build() {
-            return new UserDTO(id, name, email, role, status, department, phone, avatar);
+            return new UserDTO(id, studentId, name, email, role, status, department, phone, avatar);
         }
     }
 }

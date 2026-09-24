@@ -28,6 +28,9 @@ public class AdminController {
     private BorrowingRepository borrowingRepository;
 
     @Autowired
+    private ReservationRepository reservationRepository;
+
+    @Autowired
     private FineRepository fineRepository;
 
     @Autowired
@@ -35,6 +38,12 @@ public class AdminController {
 
     @Autowired
     private AuditLogRepository auditLogRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
+
+    @Autowired
+    private BookRequestRepository bookRequestRepository;
 
     @Autowired
     private SystemSettingRepository systemSettingRepository;
@@ -128,6 +137,156 @@ public class AdminController {
         if (userRepository.existsById(id)) {
             userRepository.deleteById(id);
             return ResponseEntity.ok(Map.of("message", "User deleted successfully"));
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    // --- Reservations ---
+    @GetMapping("/reservations")
+    public ResponseEntity<List<Reservation>> getReservations() {
+        return ResponseEntity.ok(reservationRepository.findAll());
+    }
+
+    @PutMapping("/reservations/{id}/ready")
+    public ResponseEntity<?> markReservationReady(@PathVariable String id) {
+        Reservation res = reservationRepository.findById(id).orElse(null);
+        if (res == null) return ResponseEntity.notFound().build();
+
+        res.setStatus("ready");
+        res.setPickupDeadline(LocalDate.now().plusDays(3));
+        reservationRepository.save(res);
+        return ResponseEntity.ok(res);
+    }
+
+    @PostMapping("/reservations/{id}/checkout")
+    public ResponseEntity<?> checkoutReservation(@PathVariable String id) {
+        Reservation res = reservationRepository.findById(id).orElse(null);
+        if (res == null) return ResponseEntity.notFound().build();
+
+        Book book = res.getBook();
+        if (book.getPhysicalAvailable() <= 0) {
+            return ResponseEntity.badRequest().body(Map.of("message", "No physical copies available in inventory"));
+        }
+
+        book.setPhysicalAvailable(book.getPhysicalAvailable() - 1);
+        bookRepository.save(book);
+
+        res.setStatus("fulfilled");
+        reservationRepository.save(res);
+
+        Borrowing borrowing = Borrowing.builder()
+                .user(res.getUser())
+                .book(book)
+                .borrowDate(LocalDate.now())
+                .dueDate(LocalDate.now().plusDays(14))
+                .isOverdue(false)
+                .progress(0)
+                .status("BORROWED")
+                .build();
+
+        borrowingRepository.save(borrowing);
+        return ResponseEntity.ok(Map.of("message", "Reservation checked out successfully as loan", "borrowing", borrowing));
+    }
+
+    @DeleteMapping("/reservations/{id}")
+    public ResponseEntity<?> cancelReservation(@PathVariable String id) {
+        Reservation res = reservationRepository.findById(id).orElse(null);
+        if (res != null) {
+            res.setStatus("cancelled_by_admin");
+            reservationRepository.save(res);
+
+            Notification n = Notification.builder()
+                    .user(res.getUser())
+                    .title("Reservation Removed by Admin ⚠️")
+                    .description("Your reservation for '" + res.getBook().getTitle() + "' was cancelled / removed by library staff.")
+                    .createdAt(LocalDateTime.now())
+                    .isUnread(true)
+                    .type("RESERVATION_CANCELLED")
+                    .icon("fas fa-times-circle")
+                    .build();
+            notificationRepository.save(n);
+
+            return ResponseEntity.ok(Map.of("message", "Reservation cancelled by admin"));
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/reservations/{id}/status")
+    public ResponseEntity<?> updateReservationStatus(@PathVariable String id, @RequestBody Map<String, String> payload) {
+        Reservation res = reservationRepository.findById(id).orElse(null);
+        if (res == null) return ResponseEntity.notFound().build();
+
+        String status = payload.get("status");
+        if (status != null && !status.isEmpty()) {
+            res.setStatus(status.toLowerCase());
+            if ("ready".equalsIgnoreCase(status)) {
+                res.setPickupDeadline(LocalDate.now().plusDays(3));
+            }
+            reservationRepository.save(res);
+
+            Notification n = Notification.builder()
+                    .user(res.getUser())
+                    .title("Reservation Status Updated: " + status.toUpperCase())
+                    .description("Your reservation status for '" + res.getBook().getTitle() + "' has been updated to " + status + ".")
+                    .createdAt(LocalDateTime.now())
+                    .isUnread(true)
+                    .type("RESERVATION_UPDATE")
+                    .icon("fas fa-info-circle")
+                    .build();
+            notificationRepository.save(n);
+        }
+        return ResponseEntity.ok(res);
+    }
+
+    @DeleteMapping("/reservations/{id}/permanent")
+    public ResponseEntity<?> deleteReservationPermanently(@PathVariable String id) {
+        if (reservationRepository.existsById(id)) {
+            reservationRepository.deleteById(id);
+            return ResponseEntity.ok(Map.of("message", "Reservation deleted permanently"));
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    // --- Book Requests ---
+    @GetMapping("/requests")
+    public ResponseEntity<List<BookRequest>> getRequests() {
+        return ResponseEntity.ok(bookRequestRepository.findAll());
+    }
+
+    @PutMapping("/requests/{id}/status")
+    public ResponseEntity<?> updateRequestStatus(@PathVariable String id, @RequestBody Map<String, String> payload) {
+        BookRequest req = bookRequestRepository.findById(id).orElse(null);
+        if (req == null) return ResponseEntity.notFound().build();
+
+        String status = payload.get("status");
+        String notes = payload.get("notes");
+        if (status != null) req.setStatus(status);
+        if (notes != null) req.setNotes(notes);
+
+        bookRequestRepository.save(req);
+
+        if (req.getUser() != null) {
+            String title = "Book Request Status Updated";
+            String desc = "Your request for '" + req.getTitle() + "' status has been updated to " + status.toUpperCase() + ".";
+            notificationRepository.save(Notification.builder()
+                    .user(req.getUser())
+                    .title(title)
+                    .description(desc)
+                    .createdAt(LocalDateTime.now())
+                    .isUnread(true)
+                    .type("request")
+                    .icon("approved".equalsIgnoreCase(status) ? "fas fa-check-circle" : "fas fa-info-circle")
+                    .build());
+        }
+
+        return ResponseEntity.ok(req);
+    }
+
+    @DeleteMapping("/requests/{id}")
+    public ResponseEntity<?> deleteRequestPermanently(@PathVariable String id) {
+        if (bookRequestRepository.existsById(id)) {
+            bookRequestRepository.deleteById(id);
+            return ResponseEntity.ok(Map.of("message", "Book request deleted permanently"));
         }
         return ResponseEntity.notFound().build();
     }

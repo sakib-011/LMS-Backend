@@ -105,15 +105,28 @@ public class StudentController {
         if (user == null) return ResponseEntity.status(401).body("Unauthorized");
 
         String bookId = payload.get("bookId");
+        if (bookId == null || bookId.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Book ID is required"));
+        }
+
         Book book = bookRepository.findById(bookId).orElse(null);
-        if (book == null) return ResponseEntity.badRequest().body("Book not found");
+        if (book == null) return ResponseEntity.badRequest().body(Map.of("message", "Book not found"));
+
+        List<Reservation> userRes = reservationRepository.findByUser(user);
+        for (Reservation r : userRes) {
+            if (r.getBook() != null && r.getBook().getId().equals(bookId) && ("pending".equalsIgnoreCase(r.getStatus()) || "ready".equalsIgnoreCase(r.getStatus()))) {
+                return ResponseEntity.badRequest().body(Map.of("message", "You already have an active reservation for this book."));
+            }
+        }
+
+        int activeQueue = reservationRepository.findByBookAndStatus(book, "pending").size();
 
         Reservation reservation = Reservation.builder()
                 .user(user)
                 .book(book)
                 .reservedDate(LocalDate.now())
                 .expiryDate(LocalDate.now().plusDays(14))
-                .queuePosition(1)
+                .queuePosition(activeQueue + 1)
                 .status("pending")
                 .build();
 

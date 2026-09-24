@@ -66,6 +66,7 @@ public class DataInitializer implements CommandLineRunner {
         // 1. Seed Default Users
         User student = User.builder()
                 .id("STU-2024-0440")
+                .studentId("STU-2024-0440")
                 .name("Sakib Shourov")
                 .email("student@university.edu")
                 .password(passwordEncoder.encode("password123"))
@@ -79,6 +80,7 @@ public class DataInitializer implements CommandLineRunner {
 
         User moderator = User.builder()
                 .id("MOD-101")
+                .studentId("MOD-101")
                 .name("Sarah Jenkins")
                 .email("moderator@university.edu")
                 .password(passwordEncoder.encode("password123"))
@@ -92,6 +94,7 @@ public class DataInitializer implements CommandLineRunner {
 
         User admin = User.builder()
                 .id("ADM-001")
+                .studentId("ADM-001")
                 .name("System Administrator")
                 .email("admin@university.edu")
                 .password(passwordEncoder.encode("password123"))
@@ -238,30 +241,8 @@ public class DataInitializer implements CommandLineRunner {
 
         bookRepository.saveAll(List.of(b1, b2, b3, b4, b5, b6));
 
-        // 3. Seed Borrowings
-        Borrowing bor1 = Borrowing.builder()
-                .user(student)
-                .book(b1)
-                .borrowDate(LocalDate.now().minusDays(15))
-                .dueDate(LocalDate.now().plusDays(7))
-                .isOverdue(false)
-                .progress(45)
-                .status("BORROWED")
-                .build();
-
-        Borrowing bor2 = Borrowing.builder()
-                .user(student)
-                .book(b4)
-                .borrowDate(LocalDate.now().minusDays(20))
-                .dueDate(LocalDate.now().minusDays(3))
-                .isOverdue(true)
-                .progress(80)
-                .status("OVERDUE")
-                .fineAmount(15.00)
-                .finePaid(false)
-                .build();
-
-        borrowingRepository.saveAll(List.of(bor1, bor2));
+        // 3. Seed Borrowings (Empty initially; populated dynamically when books are issued by Admin/Moderator)
+        // borrowingRepository remains empty for fresh state
 
         // 4. Seed Reservations
         Reservation res1 = Reservation.builder()
@@ -342,16 +323,8 @@ public class DataInitializer implements CommandLineRunner {
                 .build();
         auditLogRepository.save(log1);
 
-        // 11. Seed Fines
-        Fine f1 = Fine.builder()
-                .user(student)
-                .borrowing(bor2)
-                .amount(15.00)
-                .status("PENDING")
-                .reason("3 days overdue return fee")
-                .dateIssued(LocalDate.now().minusDays(3))
-                .build();
-        fineRepository.save(f1);
+        // 11. Seed Fines (Empty initially; populated dynamically when loans become overdue)
+        // fineRepository remains empty initially
 
         // 12. Seed System Settings
         SystemSetting s1 = SystemSetting.builder()

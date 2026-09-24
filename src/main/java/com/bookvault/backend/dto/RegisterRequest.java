@@ -1,11 +1,12 @@
 package com.bookvault.backend.dto;
 
 import com.bookvault.backend.entity.Role;
-
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
 public class RegisterRequest {
+    private String studentId;
+
     @NotBlank
     private String name;
 
@@ -22,7 +23,8 @@ public class RegisterRequest {
 
     public RegisterRequest() {}
 
-    public RegisterRequest(String name, String email, String password, Role role, String department, String phone) {
+    public RegisterRequest(String studentId, String name, String email, String password, Role role, String department, String phone) {
+        this.studentId = studentId;
         this.name = name;
         this.email = email;
         this.password = password;
@@ -30,6 +32,9 @@ public class RegisterRequest {
         this.department = department;
         this.phone = phone;
     }
+
+    public String getStudentId() { return studentId; }
+    public void setStudentId(String studentId) { this.studentId = studentId; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
